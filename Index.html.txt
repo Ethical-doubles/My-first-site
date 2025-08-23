@@ -1,0 +1,496 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+APP="ethical-doubles-masterpiece"
+mkdir -p "$APP"
+cd "$APP"
+
+# --- files helper ---
+w() { mkdir -p "$(dirname "$1")" && cat > "$1" <<'EOF'
+$2
+EOF
+}
+
+# package.json
+cat > package.json <<'EOF'
+{
+  "name": "ethical-doubles",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build && next export",
+    "start": "next start"
+  },
+  "dependencies": {
+    "next": "14.2.3",
+    "react": "18.2.0",
+    "react-dom": "18.2.0",
+    "tailwindcss": "^3.4.1",
+    "lucide-react": "^0.344.0"
+  },
+  "devDependencies": {
+    "autoprefixer": "^10.4.17",
+    "postcss": "^8.4.31"
+  }
+}
+EOF
+
+# next config
+cat > next.config.js <<'EOF'
+module.exports = { reactStrictMode: true, images: { unoptimized: true } };
+EOF
+
+# tailwind config
+cat > tailwind.config.js <<'EOF'
+module.exports = {
+  content: ["./pages/**/*.{js,jsx}", "./components/**/*.{js,jsx}"],
+  theme: { extend: {} },
+  plugins: [],
+};
+EOF
+
+# postcss config
+cat > postcss.config.js <<'EOF'
+module.exports = {
+  plugins: {
+    tailwindcss: {},
+    autoprefixer: {},
+  },
+};
+EOF
+
+# deploy configs
+cat > vercel.json <<'EOF'
+{
+  "version": 2,
+  "builds": [
+    { "src": "package.json", "use": "@vercel/next" }
+  ]
+}
+EOF
+
+cat > netlify.toml <<'EOF'
+[build]
+  command = "npm run build"
+  publish = "out"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+EOF
+
+# styles
+mkdir -p styles
+cat > styles/globals.css <<'EOF'
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html, body, #__next { height: 100%; }
+body { font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; }
+EOF
+
+# app wrapper
+mkdir -p pages
+cat > pages/_app.js <<'EOF'
+import '@/styles/globals.css'
+export default function App({ Component, pageProps }) {
+  return <Component {...pageProps} />
+}
+EOF
+
+# components
+mkdir -p components
+cat > components/Navbar.js <<'EOF'
+import Link from 'next/link'
+export default function Navbar(){
+  return (
+    <header className="bg-black text-white">
+      <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
+        <Link href="/"><a className="font-bold text-lg text-emerald-300">Ethical Doubles</a></Link>
+        <nav className="space-x-4">
+          <Link href="/talent"><a className="hover:underline">Talent</a></Link>
+          <Link href="/hire"><a className="hover:underline">Hire</a></Link>
+          <Link href="/apply"><a className="hover:underline">Apply</a></Link>
+          <Link href="/about"><a className="hover:underline">About</a></Link>
+        </nav>
+      </div>
+    </header>
+  )
+}
+EOF
+
+cat > components/Footer.js <<'EOF'
+export default function Footer(){
+  return (
+    <footer className="bg-neutral-900 text-neutral-400 mt-12">
+      <div className="max-w-6xl mx-auto px-4 py-8 flex items-center justify-between">
+        <div>© 2025 Ethical Doubles</div>
+        <div className="space-x-4">
+          <a href="/legal">Legal</a>
+          <a href="/contact">Contact</a>
+        </div>
+      </div>
+    </footer>
+  )
+}
+EOF
+
+cat > components/AudioPlayer.js <<'EOF'
+export default function AudioPlayer({src}){
+  return (
+    <audio controls className="w-40">
+      <source src={src} />
+      Your browser does not support the audio element.
+    </audio>
+  )
+}
+EOF
+
+cat > components/TalentCard.js <<'EOF'
+import Link from 'next/link'
+import AudioPlayer from './AudioPlayer'
+export default function TalentCard({t}){
+  return (
+    <div className="border rounded-2xl overflow-hidden bg-white">
+      <img src={t.image} alt={t.name} className="w-full h-48 object-cover" />
+      <div className="p-4">
+        <div className="font-semibold text-lg">{t.name} <span className="text-sm text-gray-500">· {t.role}</span></div>
+        <div className="text-sm text-gray-600 mt-2">{t.description}</div>
+        <div className="mt-3 flex items-center justify-between">
+          <AudioPlayer src={t.demo} />
+          <Link href={`/talent/${t.id}`}><a className="ml-4 text-sm text-emerald-600">View profile →</a></Link>
+        </div>
+      </div>
+    </div>
+  )
+}
+EOF
+
+# data
+mkdir -p data
+cat > data/talents.json <<'EOF'
+[
+  {
+    "id": "aisha",
+    "name": "Aisha",
+    "role": "Narrator",
+    "description": "Warm & professional female voice.",
+    "languages": ["English"],
+    "age": 28,
+    "demo": "/demo/aisha.mp3",
+    "image": "/talent1.jpg"
+  },
+  {
+    "id": "liam",
+    "name": "Liam",
+    "role": "Commercial",
+    "description": "Energetic male voice for ads.",
+    "languages": ["English"],
+    "age": 31,
+    "demo": "/demo/liam.mp3",
+    "image": "/talent2.jpg"
+  },
+  {
+    "id": "sophia",
+    "name": "Sophia",
+    "role": "E-Learning",
+    "description": "Clear & engaging teaching voice.",
+    "languages": ["English"],
+    "age": 26,
+    "demo": "/demo/sophia.mp3",
+    "image": "/talent3.jpg"
+  }
+]
+EOF
+
+# public placeholders
+mkdir -p public/demo
+printf "Placeholder audio file. Replace with real mp3.\n" > public/demo/aisha.mp3
+printf "Placeholder audio file. Replace with real mp3.\n" > public/demo/liam.mp3
+printf "Placeholder audio file. Replace with real mp3.\n" > public/demo/sophia.mp3
+printf "Placeholder image 1. Replace with /public/talent1.jpg\n" > public/talent1.jpg
+printf "Placeholder image 2. Replace with /public/talent2.jpg\n" > public/talent2.jpg
+printf "Placeholder image 3. Replace with /public/talent3.jpg\n" > public/talent3.jpg
+
+# pages: Home
+cat > pages/index.js <<'EOF'
+import fs from 'fs'
+import path from 'path'
+import Navbar from '@/components/Navbar'
+import Footer from '@/components/Footer'
+import TalentCard from '@/components/TalentCard'
+
+export default function Home({talents}){
+  return (
+    <div className="min-h-screen bg-gray-50 text-gray-900">
+      <Navbar />
+      <main className="max-w-6xl mx-auto px-4 py-12">
+        <section className="bg-gradient-to-r from-indigo-600 to-emerald-500 text-white rounded-2xl p-12 mb-10">
+          <h1 className="text-4xl font-bold mb-4">Ethical Doubles — Consent-first AI Talent Agency</h1>
+          <p className="text-lg">Licensed AI voices & avatars from real people. Talent earn royalties. Brands get on-brand, legal voices.</p>
+          <div className="mt-6 space-x-3">
+            <a href="/hire" className="inline-block bg-white text-indigo-700 px-4 py-2 rounded-lg font-semibold">Hire Talent</a>
+            <a href="/apply" className="inline-block bg-neutral-900 text-white px-4 py-2 rounded-lg font-semibold">Apply as Talent</a>
+          </div>
+        </section>
+
+        <section className="mb-8">
+          <h2 className="text-2xl font-semibold mb-4">Featured Talent</h2>
+          <div className="grid md:grid-cols-3 gap-6">
+            {talents.map(t => <TalentCard key={t.id} t={t} />)}
+          </div>
+        </section>
+
+        <section className="mt-12 bg-white p-6 rounded-2xl">
+          <h3 className="text-xl font-semibold">Why Ethical Doubles?</h3>
+          <ul className="list-disc pl-5 mt-3 text-gray-700">
+            <li>Consent-first licensing and clear royalties</li>
+            <li>Watermarked outputs and audit trail</li>
+            <li>No politics, adult, medical or scam use</li>
+          </ul>
+        </section>
+      </main>
+      <Footer />
+    </div>
+  )
+}
+
+export async function getStaticProps(){
+  const dataPath = path.join(process.cwd(),'data','talents.json')
+  const talents = JSON.parse(fs.readFileSync(dataPath,'utf8'))
+  return { props: { talents } }
+}
+EOF
+
+# pages: Talent catalog
+mkdir -p pages/talent
+cat > pages/talent/index.js <<'EOF'
+import fs from 'fs'
+import path from 'path'
+import Navbar from '@/components/Navbar'
+import Footer from '@/components/Footer'
+import TalentCard from '@/components/TalentCard'
+
+export default function TalentPage({talents}){
+  return (
+    <div className="min-h-screen bg-gray-50 text-gray-900">
+      <Navbar />
+      <main className="max-w-6xl mx-auto px-4 py-12">
+        <h1 className="text-3xl font-bold mb-6">Talent Catalog</h1>
+        <div className="grid md:grid-cols-3 gap-6">
+          {talents.map(t => <TalentCard key={t.id} t={t} />)}
+        </div>
+      </main>
+      <Footer />
+    </div>
+  )
+}
+
+export async function getStaticProps(){
+  const dataPath = path.join(process.cwd(),'data','talents.json')
+  const talents = JSON.parse(fs.readFileSync(dataPath,'utf8'))
+  return { props: { talents } }
+}
+EOF
+
+# pages: Talent profile
+cat > pages/talent/[id].js <<'EOF'
+import fs from 'fs'
+import path from 'path'
+import Navbar from '@/components/Navbar'
+import Footer from '@/components/Footer'
+import AudioPlayer from '@/components/AudioPlayer'
+
+export default function Profile({talent}){
+  if(!talent) return (<div>Not found</div>)
+  return (
+    <div className="min-h-screen bg-gray-50 text-gray-900">
+      <Navbar />
+      <main className="max-w-4xl mx-auto px-4 py-12">
+        <div className="bg-white rounded-2xl p-6 shadow">
+          <div className="md:flex md:items-center gap-6">
+            <img src={talent.image} className="w-48 h-48 object-cover rounded-lg" alt={talent.name} />
+            <div>
+              <h1 className="text-2xl font-bold">{talent.name} · {talent.role}</h1>
+              <p className="text-gray-700 mt-2">{talent.description}</p>
+              <div className="mt-4">
+                <AudioPlayer src={talent.demo} />
+              </div>
+              <div className="mt-6">
+                <a href="/hire" className="inline-block bg-emerald-500 text-black px-4 py-2 rounded-lg font-semibold">Request this talent</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+      <Footer />
+    </div>
+  )
+}
+
+export async function getStaticPaths(){
+  const dataPath = path.join(process.cwd(),'data','talents.json')
+  const talents = JSON.parse(fs.readFileSync(dataPath,'utf8'))
+  const paths = talents.map(t => ({ params: { id: t.id } }))
+  return { paths, fallback: false }
+}
+
+export async function getStaticProps({params}){
+  const dataPath = path.join(process.cwd(),'data','talents.json')
+  const talents = JSON.parse(fs.readFileSync(dataPath,'utf8'))
+  const talent = talents.find(t => t.id === params.id) || null
+  return { props: { talent } }
+}
+EOF
+
+# pages: hire
+cat > pages/hire.js <<'EOF'
+import Navbar from '@/components/Navbar'
+import Footer from '@/components/Footer'
+
+export default function Hire(){
+  return (
+    <div className="min-h-screen bg-gray-50 text-gray-900">
+      <Navbar />
+      <main className="max-w-2xl mx-auto px-4 py-12">
+        <div className="bg-white p-8 rounded-2xl shadow">
+          <h1 className="text-2xl font-bold mb-4">Hire Talent</h1>
+          <form action="https://formspree.io/f/yourformid" method="POST" className="space-y-4">
+            <input name="name" placeholder="Full name" className="w-full border px-3 py-2 rounded" required />
+            <input name="email" type="email" placeholder="Email" className="w-full border px-3 py-2 rounded" required />
+            <select name="project" className="w-full border px-3 py-2 rounded">
+              <option>Commercial</option>
+              <option>Explainer</option>
+              <option>E-Learning</option>
+            </select>
+            <textarea name="message" rows="4" placeholder="Project details" className="w-full border px-3 py-2 rounded"></textarea>
+            <button className="bg-emerald-500 text-black px-4 py-2 rounded font-semibold">Send Request</button>
+          </form>
+        </div>
+      </main>
+      <Footer />
+    </div>
+  )
+}
+EOF
+
+# pages: apply
+cat > pages/apply.js <<'EOF'
+import Navbar from '@/components/Navbar'
+import Footer from '@/components/Footer'
+
+export default function Apply(){
+  return (
+    <div className="min-h-screen bg-gray-50 text-gray-900">
+      <Navbar />
+      <main className="max-w-2xl mx-auto px-4 py-12">
+        <div className="bg-white p-8 rounded-2xl shadow">
+          <h1 className="text-2xl font-bold mb-4">Apply as Talent</h1>
+          <form action="https://formspree.io/f/yourformid" method="POST" className="space-y-4">
+            <input name="name" placeholder="Full name" className="w-full border px-3 py-2 rounded" required />
+            <input name="email" type="email" placeholder="Email" className="w-full border px-3 py-2 rounded" required />
+            <select name="role" className="w-full border px-3 py-2 rounded">
+              <option>Voice Actor</option>
+              <option>Avatar</option>
+              <option>Both</option>
+            </select>
+            <input name="portfolio" placeholder="Portfolio or demo link" className="w-full border px-3 py-2 rounded" />
+            <textarea name="message" rows="4" placeholder="Tell us about your voice/experience" className="w-full border px-3 py-2 rounded"></textarea>
+            <button className="bg-indigo-700 text-white px-4 py-2 rounded font-semibold">Apply</button>
+          </form>
+        </div>
+      </main>
+      <Footer />
+    </div>
+  )
+}
+EOF
+
+# pages: about
+cat > pages/about.js <<'EOF'
+import Navbar from '@/components/Navbar'
+import Footer from '@/components/Footer'
+export default function About(){
+  return (
+    <div className="min-h-screen bg-gray-50 text-gray-900">
+      <Navbar />
+      <main className="max-w-4xl mx-auto px-4 py-12">
+        <h1 className="text-3xl font-bold mb-4">About Ethical Doubles</h1>
+        <p className="text-gray-700">We are a consent-first agency that licenses real people's voices and likenesses for ethical AI. Talent receive 50% royalties. No politics, adult, or scam usage.</p>
+      </main>
+      <Footer />
+    </div>
+  )
+}
+EOF
+
+# pages: contact
+cat > pages/contact.js <<'EOF'
+import Navbar from '@/components/Navbar'
+import Footer from '@/components/Footer'
+export default function Contact(){
+  return (
+    <div className="min-h-screen bg-gray-50 text-gray-900">
+      <Navbar />
+      <main className="max-w-2xl mx-auto px-4 py-12">
+        <div className="bg-white p-8 rounded-2xl shadow">
+          <h1 className="text-2xl font-bold mb-4">Contact</h1>
+          <form action="https://formspree.io/f/yourformid" method="POST" className="space-y-4">
+            <input name="name" placeholder="Full name" className="w-full border px-3 py-2 rounded" required />
+            <input name="email" type="email" placeholder="Email" className="w-full border px-3 py-2 rounded" required />
+            <textarea name="message" rows="4" placeholder="Message" className="w-full border px-3 py-2 rounded"></textarea>
+            <button className="bg-emerald-500 text-black px-4 py-2 rounded font-semibold">Send</button>
+          </form>
+        </div>
+      </main>
+      <Footer />
+    </div>
+  )
+}
+EOF
+
+# pages: legal
+cat > pages/legal.js <<'EOF'
+import Navbar from '@/components/Navbar'
+import Footer from '@/components/Footer'
+export default function Legal(){
+  return (
+    <div className="min-h-screen bg-gray-50 text-gray-900">
+      <Navbar />
+      <main className="max-w-4xl mx-auto px-4 py-12">
+        <h1 className="text-3xl font-bold mb-4">Privacy & Terms</h1>
+        <p className="text-gray-700">This site is a starter template. Replace with legal text before launch. Talent agreements, client licenses, and privacy policy must be finalized.</p>
+      </main>
+      <Footer />
+    </div>
+  )
+}
+EOF
+
+# README
+cat > README.md <<'EOF'
+# Ethical Doubles — Masterpiece Starter
+
+Next.js + Tailwind starter for a consent-first AI Talent Agency.
+
+## Quick start
+1. `npm install`
+2. Replace Formspree IDs (`yourformid`) in pages with your own Formspree form ID
+3. Add real MP3 demos to `public/demo/` and images to `public/`
+4. `npm run dev` → http://localhost:3000
+
+## Deploy
+- Push to GitHub → Import to Vercel (recommended) or Netlify.
+- `vercel.json` and `netlify.toml` included.
+
+## Notes
+- Replace placeholder legal copy before launch.
+EOF
+
+echo "Project created in $(pwd)"
+echo "Next steps:"
+echo "  npm install"
+echo "  npm run dev"

@@ -1,0 +1,27 @@
+import Navbar from '@/components/Navbar'
+import Footer from '@/components/Footer'
+
+export default function Hire(){
+  return (
+    <div className="min-h-screen bg-gray-50 text-gray-900">
+      <Navbar />
+      <main className="max-w-2xl mx-auto px-4 py-12">
+        <div className="bg-white p-8 rounded-2xl shadow">
+          <h1 className="text-2xl font-bold mb-4">Hire Talent</h1>
+          <form action="https://formspree.io/f/yourformid" method="POST" className="space-y-4">
+            <input name="name" placeholder="Full name" className="w-full border px-3 py-2 rounded" required />
+            <input name="email" type="email" placeholder="Email" className="w-full border px-3 py-2 rounded" required />
+            <select name="project" className="w-full border px-3 py-2 rounded">
+              <option>Commercial</option>
+              <option>Explainer</option>
+              <option>E-Learning</option>
+            </select>
+            <textarea name="message" rows="4" placeholder="Project details" className="w-full border px-3 py-2 rounded"></textarea>
+            <button className="bg-emerald-500 text-black px-4 py-2 rounded font-semibold">Send Request</button>
+          </form>
+        </div>
+      </main>
+      <Footer />
+    </div>
+  )
+}

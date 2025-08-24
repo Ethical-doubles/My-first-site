@@ -1,0 +1,32 @@
+[
+  {
+    "id": "aisha",
+    "name": "Aisha",
+    "role": "Narrator",
+    "description": "Warm & professional female voice.",
+    "languages": ["English"],
+    "age": 28,
+    "demo": "/demo/aisha.mp3",
+    "image": "/talent1.jpg"
+  },
+  {
+    "id": "liam",
+    "name": "Liam",
+    "role": "Commercial",
+    "description": "Energetic male voice for ads.",
+    "languages": ["English"],
+    "age": 31,
+    "demo": "/demo/liam.mp3",
+    "image": "/talent2.jpg"
+  },
+  {
+    "id": "sophia",
+    "name": "Sophia",
+    "role": "E-Learning",
+    "description": "Clear & engaging teaching voice.",
+    "languages": ["English"],
+    "age": 26,
+    "demo": "/demo/sophia.mp3",
+    "image": "/talent3.jpg"
+  }
+]
